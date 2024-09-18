@@ -24,7 +24,12 @@ class RedditScraper:
                     ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
                 post_text = '\n\n'.join(
                     [elem.get_text(strip=True) for elem in text_elements])
-                return (post_title, post_text.strip())
+
+                # Remove newlines and quotes from the post text
+                cleaned_post_text = post_text.replace(
+                    '\n', '').replace('"', '').replace("'", "")
+
+                return cleaned_post_text.strip()
             else:
                 return "Post content not found."
 
