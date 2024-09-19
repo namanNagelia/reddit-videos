@@ -129,7 +129,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+redditGoogleKey.json
 # Spyder project settings
 .spyderproject
 .spyproject
