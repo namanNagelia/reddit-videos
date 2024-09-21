@@ -29,7 +29,7 @@ class RedditScraper:
                 cleaned_post_text = post_text.replace(
                     '\n', '').replace('"', '').replace("'", "")
 
-                return cleaned_post_text.strip()
+                return (cleaned_post_text.strip(), post_title.strip())
             else:
                 return "Post content not found."
 
