@@ -1,3 +1,5 @@
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
+import subprocess
 from openai import OpenAI
 import json
 import requests
@@ -22,7 +24,6 @@ from google.auth.transport.requests import Request
 import moviepy.video.fx.all as vfx
 from moviepy.audio.fx.all import volumex
 import moviepy.audio.fx.all as afx
-from PIL import Image, ImageDraw, ImageFont, ImageOps
 import time
 from datetime import datetime
 import pickle
@@ -39,6 +40,8 @@ client = OpenAI(api_key=os.getenv("OPENAI_APIKEY"))
 #     ]
 # )
 
+
+font_path = "resources/fonts/Salsa.ttf"
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './redditGoogleKey.json'
 
@@ -101,26 +104,38 @@ class VideoTools:
 
         # Export the final audio
         # trimmed_audio.export(filename, format="mp3", bitrate="128k")
-        print(f"Saved TTS audio to {filename}")
+        print(f"Saved TTS audio to {temp_filename}")
 
         # Clean up the temporary file
         # os.remove(temp_filename)
 
-        return filename
+        return temp_filename
 
-    def parse_srt(self, srt_file):
-        with open(srt_file, "r") as f:
-            content = f.read()
-        subtitles = []
-        for block in content.strip().split("\n\n"):
-            lines = block.split("\n")
-            if len(lines) >= 3:
-                times = lines[1].split(" --> ")
-                start_time = times[0].replace(",", ".")
-                end_time = times[1].replace(",", ".")
-                text = " ".join(lines[2:])
-                subtitles.append((start_time, end_time, text))
-        return subtitles
+    def parse_srt(self, srt_file_path):
+        try:
+            # Check if the file exists
+            if not os.path.exists(srt_file_path):
+                raise FileNotFoundError(
+                    f"The SRT file does not exist at the specified path: {srt_file_path}")
+
+            with open(srt_file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            subtitles = []
+            for block in content.strip().split("\n\n"):
+                lines = block.split("\n")
+                if len(lines) >= 3:
+                    times = lines[1].split(" --> ")
+                    start_time = times[0].replace(",", ".")
+                    end_time = times[1].replace(",", ".")
+                    text = " ".join(lines[2:])
+                    subtitles.append((start_time, end_time, text))
+
+            return subtitles
+
+        except Exception as e:
+            print(f"An error occurred while parsing the SRT file: {str(e)}")
+            return []
 
     def loop_audio_clips_sequentially(self, audio_clips, duration):
         concatenated = concatenate_audioclips(audio_clips)
@@ -140,71 +155,93 @@ class VideoTools:
 
         return concatenate_audioclips(loops)
 
-    def make_video(self,
-                   video_path, music_folder, tts_path, srt_path, output_path, target_resolution=(
-                       720, 1280)
-                   ):
-        video_clip = VideoFileClip(video_path)
-        tts_clip = AudioFileClip(tts_path)
-        video_clip = video_clip.resize(width=1920)
-        music_files = [
-            os.path.join(music_folder, file)
-            for file in os.listdir(music_folder)
-            if file.endswith(".mp3")
-        ]
-        num_music_files = len(music_files)
-        num_clips_to_select = min(
-            num_music_files, 40
-        )  # Adjust the number of music clips to select as needed
-        music_paths = random.sample(music_files, num_clips_to_select)
-        music_clips = [
-            AudioFileClip(music_path).fx(afx.volumex, 0.1) for music_path in music_paths
-        ]  # Reduce volume by 50%
-
-        # Repeat the video to match the length of the TTS clip
-        video_clip = vfx.loop(video_clip, duration=tts_clip.duration)
-
-        # Loop the audio clips sequentially to match the length of the TTS clip
-        looped_music_clip = self.loop_audio_clips_sequentially(
-            music_clips, tts_clip.duration)
-
-        # Create a composite audio clip with TTS and music starting at the same time
-        composite_audio = CompositeAudioClip([tts_clip, looped_music_clip]).set_duration(
-            tts_clip.duration
+    def generate_srt(self, file_path):
+        audio_file = open(file_path, "rb")
+        transcript = client.audio.transcriptions.create(
+            file=audio_file,
+            model="whisper-1",
+            response_format="verbose_json",
+            timestamp_granularities=["word"],
         )
-        subtitles = self.parse_srt(srt_path)
-        font_path = "NotoSans-Bold.ttf"
-        subtitle_clips = [
-            TextClip(
-                text,
-                fontsize=60,
-                color="white",
-                font=font_path,
-                stroke_color="black",
-                stroke_width=1,
-                method="caption",
-                size=video_clip.size,
-                align="center",
-                # bg_color="rgba(0, 0, 0, 0.5)",  # semi-transparent background
+
+        # Group words into lines with approximately three words per line
+        grouped_segments = []
+        current_line = []
+        current_start = None
+        for index, segment in enumerate(transcript.words):
+            if len(current_line) == 0:
+                current_start = segment["start"]
+            current_line.append(segment["word"])
+            if len(current_line) == 3 or index == len(transcript.words) - 1:
+                current_end = segment["end"]
+                grouped_segments.append(
+                    (current_start, current_end, " ".join(current_line))
+                )
+                current_line = []
+
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        srt_file_path = os.path.join(script_dir, "subtitles.srt")
+        with open(srt_file_path, "w") as srt_file:
+            for index, (start_time, end_time, text) in enumerate(grouped_segments):
+                start_time_str = (
+                    time.strftime("%H:%M:%S", time.gmtime(start_time))
+                    + ","
+                    + str(int((start_time % 1) * 1000)).zfill(3)
+                )
+                end_time_str = (
+                    time.strftime("%H:%M:%S", time.gmtime(end_time))
+                    + ","
+                    + str(int((end_time % 1) * 1000)).zfill(3)
+                )
+                srt_file.write(
+                    f"{index + 1}\n{start_time_str} --> {end_time_str}\n{text}\n\n"
+                )
+
+        print(f"Saved SRT file to {srt_file_path}")
+        return srt_file_path
+
+    def make_video(self, video_path, music_path, tts_path, srt_path, output_path, target_resolution=(720, 1280)):
+        try:
+            video_clip = VideoFileClip(video_path)
+            tts_clip = AudioFileClip(tts_path)
+            music_clip = AudioFileClip(music_path).fx(afx.volumex, 0.1)
+
+            video_clip = vfx.loop(video_clip, duration=tts_clip.duration)
+            looped_music_clip = self.loop_audio_clips_sequentially(
+                [music_clip], tts_clip.duration)
+
+            composite_audio = CompositeAudioClip(
+                [tts_clip, looped_music_clip]).set_duration(tts_clip.duration)
+
+            subtitles = self.parse_srt(srt_path)
+
+            subtitle_clips = []
+            for start, end, text in subtitles:
+                start_time = self.time_to_seconds(start)
+                end_time = self.time_to_seconds(end)
+                subtitle_clip = (TextClip(text, fontsize=60, color='white', font="Salsa",
+                                          stroke_color='black', stroke_width=1,
+                                          size=video_clip.size, method='caption')
+                                 .set_position(('center', 'bottom'))
+                                 .set_start(start_time)
+                                 .set_duration(end_time - start_time))
+                subtitle_clips.append(subtitle_clip)
+
+            video_with_subtitles = CompositeVideoClip(
+                [video_clip] + subtitle_clips)
+            final_video = video_with_subtitles.set_audio(composite_audio)
+
+            final_video = final_video.fadein(2).fadeout(2)
+
+            final_video.write_videofile(
+                output_path, codec="libx264", audio_codec="aac", fps=30, preset="ultrafast"
             )
-            .set_position(("center", "center"))
-            .set_start(start)
-            .set_end(end)
-            for (start, end, text) in subtitles
-        ]
+            print(f"Saved final video to {output_path}")
 
-        # Overlay subtitles on the video clip
-        video_with_subtitles = CompositeVideoClip(
-            [video_clip] + subtitle_clips)
+        except Exception as e:
+            print(f"An error occurred while making the video: {str(e)}")
 
-        # Set the composite audio to the video clip with subtitles
-        final_video = video_with_subtitles.set_audio(composite_audio)
-
-        # Add fade-in and fade-out effects
-        final_video = final_video.fadein(2).fadeout(2)
-
-        # Write the final video to a file
-        final_video.write_videofile(
-            output_path, codec="libx264", audio_codec="aac", fps=30, preset="ultrafast"
-        )
-        print(f"Saved final video to {output_path}")
+    def time_to_seconds(self, time_str):
+        h, m, s = time_str.split(':')
+        return int(h) * 3600 + int(m) * 60 + float(s)
