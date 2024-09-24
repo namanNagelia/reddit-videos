@@ -1,9 +1,18 @@
+from moviepy.editor import (
+    VideoFileClip,
+    AudioFileClip,
+    concatenate_videoclips,
+    CompositeAudioClip,
+    CompositeVideoClip,
+    TextClip
+)
 from src.redditScraper import RedditScraper
 from src.videoTools import VideoTools
 import os
 import random
 
 videoTool = VideoTools()
+
 
 # Steps:
 # 1: Make UI and you put reddit URL
@@ -24,7 +33,8 @@ video_files = [f for f in os.listdir(
     video_folder) if f.endswith(('.mp4', '.avi', '.mov'))]
 random_video = random.choice(video_files)
 video_path = os.path.join(video_folder, random_video)
-
+font_file = os.path.join(resources_folder, "Salsa.ttf")
+print(font_file)
 # Get a random music file
 music_files = [f for f in os.listdir(
     music_folder) if f.endswith(('.mp3', '.wav'))]
@@ -36,6 +46,6 @@ srt_path = videoTool.generate_srt(tts_path)
 
 # 5: Export video
 video = videoTool.make_video(video_path=video_path, music_path=music_path, tts_path=tts_path,
-                             srt_path=srt_path, output_path="output.mp4", target_resolution=(720, 1280))
+                             srt_path=srt_path, output_path="output.mp4", target_resolution=(720, 1280), font=font_file)
 
 # 6: Once approved, upload to youtube

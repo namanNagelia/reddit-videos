@@ -172,7 +172,7 @@ class VideoTools:
             if len(current_line) == 0:
                 current_start = segment["start"]
             current_line.append(segment["word"])
-            if len(current_line) == 3 or index == len(transcript.words) - 1:
+            if len(current_line) == 5 or index == len(transcript.words) - 1:
                 current_end = segment["end"]
                 grouped_segments.append(
                     (current_start, current_end, " ".join(current_line))
@@ -201,7 +201,7 @@ class VideoTools:
         print(f"Saved SRT file to {srt_file_path}")
         return srt_file_path
 
-    def make_video(self, video_path, music_path, tts_path, srt_path, output_path, target_resolution=(720, 1280)):
+    def make_video(self, video_path, music_path, tts_path, srt_path, output_path, font, target_resolution=(720, 1280)):
         try:
             video_clip = VideoFileClip(video_path)
             tts_clip = AudioFileClip(tts_path)
@@ -220,8 +220,8 @@ class VideoTools:
             for start, end, text in subtitles:
                 start_time = self.time_to_seconds(start)
                 end_time = self.time_to_seconds(end)
-                subtitle_clip = (TextClip(text, fontsize=60, color='white', font="Salsa",
-                                          stroke_color='black', stroke_width=1,
+                subtitle_clip = (TextClip(text, fontsize=60, color='white', font="Salsa-Regular",
+                                          stroke_color='white', stroke_width=1,
                                           size=video_clip.size, method='caption')
                                  .set_position(('center', 'bottom'))
                                  .set_start(start_time)
