@@ -178,44 +178,61 @@ class VideoTools:
         return concatenate_audioclips(loops)
 
     def generate_srt(self, file_path):
-        audio_file = open(file_path, "rb")
-        transcript = client.audio.transcriptions.create(
-            file=audio_file,
-            model="whisper-1",
-            response_format="verbose_json",
-            timestamp_granularities=["word"],
-        )
+        """
+        Generate SRT subtitle file from audio using OpenAI Whisper API
+        """
+        # Open and transcribe the audio file
+        with open(file_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                file=audio_file,
+                model="whisper-1",
+                response_format="verbose_json",
+                timestamp_granularities=["word"]
+            )
 
-        # Group words into lines with approximately three words per line
+        # Group words into lines with approximately five words per line
         grouped_segments = []
         current_line = []
         current_start = None
-        for index, segment in enumerate(transcript.words):
+        words = transcript.words  # Access the words from the transcript response
+
+        for index, word in enumerate(words):
+            # Start a new line
             if len(current_line) == 0:
-                current_start = segment["start"]
-            current_line.append(segment["word"])
-            if len(current_line) == 5 or index == len(transcript.words) - 1:
-                current_end = segment["end"]
+                current_start = word.start
+
+            # Add word to current line
+            current_line.append(word.word)
+
+            # End the line if we have 5 words or it's the last word
+            if len(current_line) == 5 or index == len(words) - 1:
+                current_end = word.end
                 grouped_segments.append(
                     (current_start, current_end, " ".join(current_line))
                 )
                 current_line = []
 
+        # Generate SRT file
         script_dir = os.path.dirname(os.path.abspath(__file__))
-
         srt_file_path = os.path.join(script_dir, "subtitles.srt")
-        with open(srt_file_path, "w") as srt_file:
+
+        with open(srt_file_path, "w", encoding='utf-8') as srt_file:
             for index, (start_time, end_time, text) in enumerate(grouped_segments):
+                # Format start time
                 start_time_str = (
-                    time.strftime("%H:%M:%S", time.gmtime(start_time))
-                    + ","
-                    + str(int((start_time % 1) * 1000)).zfill(3)
+                        time.strftime("%H:%M:%S", time.gmtime(start_time))
+                        + ","
+                        + str(int((start_time % 1) * 1000)).zfill(3)
                 )
+
+                # Format end time
                 end_time_str = (
-                    time.strftime("%H:%M:%S", time.gmtime(end_time))
-                    + ","
-                    + str(int((end_time % 1) * 1000)).zfill(3)
+                        time.strftime("%H:%M:%S", time.gmtime(end_time))
+                        + ","
+                        + str(int((end_time % 1) * 1000)).zfill(3)
                 )
+
+                # Write SRT entry
                 srt_file.write(
                     f"{index + 1}\n{start_time_str} --> {end_time_str}\n{text}\n\n"
                 )
