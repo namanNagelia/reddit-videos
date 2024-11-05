@@ -53,6 +53,28 @@ class VideoTools:
     def print_OpenAI(self):
         print(client)
 
+    def makeBetterScript(self, text):
+        prompt = f"""
+    Please take the following script and make it more interesting and funny. 
+    Enhance the dialogue, add humorous elements, and improve the overall 
+    entertainment value while maintaining the core message and structure.
+
+    Original script:
+    {text}
+
+    Improved, funnier version:
+    """
+
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a talented  writer tasked with improving scripts."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        improved_script = completion.choices[0].message.content
+        return improved_script
+
     def convert_text_to_speech(self, text, filename, voice_name="en-US-Neural2-J"):
 
         client = texttospeech.TextToSpeechClient()
