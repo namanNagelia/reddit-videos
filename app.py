@@ -105,7 +105,7 @@ class Application:
             video_path = os.path.join(video_folder, random_video)
 
             # Get font file
-            font_file = os.path.join(resources_folder, "Salsa.ttf")
+            font_file = os.path.join(resources_folder, "Mont.ttf")
             if not os.path.exists(font_file):
                 raise FileNotFoundError("Required font file not found")
 
