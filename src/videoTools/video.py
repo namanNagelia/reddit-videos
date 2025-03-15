@@ -41,7 +41,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_APIKEY"))
 # )
 
 
-font_path = "resources/fonts/Salsa.ttf"
+font_path = "resources/fonts/Mont.ttf"
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './redditGoogleKey.json'
 
@@ -261,7 +261,7 @@ class VideoTools:
         try:
             video_clip = VideoFileClip(video_path)
             tts_clip = AudioFileClip(tts_path)
-            music_clip = AudioFileClip(music_path).fx(afx.volumex, 0.1)
+            music_clip = AudioFileClip(music_path).fx(afx.volumex, 0.05)
 
             video_clip = vfx.loop(video_clip, duration=tts_clip.duration)
             looped_music_clip = self.loop_audio_clips_sequentially(
@@ -276,7 +276,7 @@ class VideoTools:
             for start, end, text in subtitles:
                 start_time = self.time_to_seconds(start)
                 end_time = self.time_to_seconds(end)
-                subtitle_clip = (TextClip(text, fontsize=60, color='white', font="Salsa-Regular",
+                subtitle_clip = (TextClip(text, fontsize=60, color='white', font="Mont-Bold",
                                           stroke_color='white', stroke_width=1,
                                           size=video_clip.size, method='caption')
                                  .set_position(('center', 'bottom'))

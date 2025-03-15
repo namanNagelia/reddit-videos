@@ -55,10 +55,12 @@ class Application:
     def handle_error(self, error_message):
         """Safely handle errors and update UI"""
         print(f"Error: {error_message}")
+
         def _handle_error():
             self.status_label.config(text=f"Error: {error_message}")
             self.generate_button.config(state='normal')
-            messagebox.showerror("Error", f"An error occurred: {error_message}")
+            messagebox.showerror(
+                "Error", f"An error occurred: {error_message}")
 
         self.master.after(0, _handle_error)
 
@@ -105,7 +107,7 @@ class Application:
             video_path = os.path.join(video_folder, random_video)
 
             # Get font file
-            font_file = os.path.join(resources_folder, "Salsa.ttf")
+            font_file = os.path.join(resources_folder, "Mont.ttf")
             if not os.path.exists(font_file):
                 raise FileNotFoundError("Required font file not found")
 
@@ -136,7 +138,8 @@ class Application:
 
             # Final steps
             self.update_status("Process Completed!", 100)
-            self.master.after(0, lambda: self.generate_button.config(state='normal'))
+            self.master.after(
+                0, lambda: self.generate_button.config(state='normal'))
             self.master.after(0, lambda: messagebox.showinfo("Success",
                                                              "Video generated successfully!"))
 
