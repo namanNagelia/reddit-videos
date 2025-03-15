@@ -95,7 +95,7 @@ class VideoTools:
 
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=1.0,
+            speaking_rate=1.2,
             pitch=0,
             volume_gain_db=0,
             effects_profile_id=["medium-bluetooth-speaker-class-device"]
@@ -177,36 +177,53 @@ class VideoTools:
 
         return concatenate_audioclips(loops)
 
-    def generate_srt(self, file_path):
+    def generate_srt(self, file_path, words=None):
         """
         Generate SRT subtitle file from audio using OpenAI Whisper API
+        If words is provided, use that instead of transcribing the file
         """
-        # Open and transcribe the audio file
-        with open(file_path, "rb") as audio_file:
-            transcript = client.audio.transcriptions.create(
-                file=audio_file,
-                model="whisper-1",
-                response_format="verbose_json",
-                timestamp_granularities=["word"]
-            )
+        if words is None:
+            # Open and transcribe the audio file
+            with open(file_path, "rb") as audio_file:
+                transcript = client.audio.transcriptions.create(
+                    file=audio_file,
+                    model="whisper-1",
+                    response_format="verbose_json",
+                    timestamp_granularities=["word"]
+                )
+                words = transcript.words  # Access the words from the transcript response
+        else:
+            # Use the provided words list
+            print("Using provided words list")
 
         # Group words into lines with approximately five words per line
         grouped_segments = []
         current_line = []
         current_start = None
-        words = transcript.words  # Access the words from the transcript response
 
         for index, word in enumerate(words):
             # Start a new line
             if len(current_line) == 0:
-                current_start = word.start
+                # Handle both object attributes and dictionary keys
+                if hasattr(word, 'start'):
+                    current_start = word.start
+                else:
+                    current_start = word['start']
 
             # Add word to current line
-            current_line.append(word.word)
+            if hasattr(word, 'word'):
+                current_line.append(word.word)
+            else:
+                current_line.append(word['word'])
 
             # End the line if we have 5 words or it's the last word
             if len(current_line) == 5 or index == len(words) - 1:
-                current_end = word.end
+                # Handle both object attributes and dictionary keys
+                if hasattr(word, 'end'):
+                    current_end = word.end
+                else:
+                    current_end = word['end']
+
                 grouped_segments.append(
                     (current_start, current_end, " ".join(current_line))
                 )
@@ -220,16 +237,16 @@ class VideoTools:
             for index, (start_time, end_time, text) in enumerate(grouped_segments):
                 # Format start time
                 start_time_str = (
-                        time.strftime("%H:%M:%S", time.gmtime(start_time))
-                        + ","
-                        + str(int((start_time % 1) * 1000)).zfill(3)
+                    time.strftime("%H:%M:%S", time.gmtime(start_time))
+                    + ","
+                    + str(int((start_time % 1) * 1000)).zfill(3)
                 )
 
                 # Format end time
                 end_time_str = (
-                        time.strftime("%H:%M:%S", time.gmtime(end_time))
-                        + ","
-                        + str(int((end_time % 1) * 1000)).zfill(3)
+                    time.strftime("%H:%M:%S", time.gmtime(end_time))
+                    + ","
+                    + str(int((end_time % 1) * 1000)).zfill(3)
                 )
 
                 # Write SRT entry
