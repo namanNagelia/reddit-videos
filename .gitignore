@@ -162,3 +162,9 @@ cython_debug/
 #.idea/
 .DS_Store
 resources/.DS_Store
+
+.DS_Store
+youtube_shorts.mp4
+mainVideo.mp4
+output.mp4
+temp_tts_output.mp3

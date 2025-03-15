@@ -18,7 +18,7 @@ videoTool = VideoTools()
 # 1: Make UI and you put reddit URL
 # 2: It gets the text
 scraper = RedditScraper()
-post_url = "https://www.reddit.com/r/AmItheAsshole/comments/1evge2u/aita_for_telling_my_coworker_that_i_didnt_enjoy/"
+post_url = "https://www.reddit.com/r/AmItheAsshole/comments/1itosgl/aita_for_making_my_bfs_mom_cry_because_of_a_petty/"
 post_text = scraper.get_post_text(post_url)
 
 # 3: Convert to audio
@@ -42,10 +42,15 @@ random_music = random.choice(music_files)
 music_path = os.path.join(music_folder, random_music)
 
 # Generate subtitles
+print(tts_path)
 srt_path = videoTool.generate_srt(tts_path)
 
 # 5: Export video
 video = videoTool.make_video(video_path=video_path, music_path=music_path, tts_path=tts_path,
-                             srt_path=srt_path, output_path="output.mp4", target_resolution=(720, 1280), font=font_file)
+                             srt_path=srt_path, output_path="mainVideo.mp4", target_resolution=(720, 1280), font=font_file)
+youtube_shorts = videoTool.make_video(video_path=video_path, music_path=music_path,
+                                      tts_path=tts_path, srt_path=srt_path, output_path="youtube_shorts.mp4", target_resolution=(1080, 1920), font=font_file)
+
+# Youtube short resolution
 
 # 6: Once approved, upload to youtube

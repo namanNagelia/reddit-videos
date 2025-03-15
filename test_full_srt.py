@@ -1,0 +1,26 @@
+import os
+from src.videoTools.video import VideoTools
+
+# Full word data from the user's input
+words_data = [{'word': 'So', 'start': 0.0, 'end': 0.30000001192092896}, {'word': 'me', 'start': 0.30000001192092896, 'end': 0.5199999809265137}, {'word': '20F', 'start': 0.7599999904632568, 'end': 1.2599999904632568}, {'word': 'and', 'start': 1.4800000190734863, 'end': 1.659999966621399}, {'word': 'my', 'start': 1.659999966621399, 'end': 1.8200000524520874}, {'word': 'boyfriend', 'start': 1.8200000524520874, 'end': 2.2200000286102295}, {'word': '24M', 'start': 2.4000000953674316, 'end': 3.0399999618530273}, {'word': 'have', 'start': 3.319999933242798, 'end': 3.440000057220459}, {'word': 'been', 'start': 3.440000057220459, 'end': 3.5399999618530273}, {'word': 'together', 'start': 3.5399999618530273, 'end': 3.859999895095825}, {'word': 'for', 'start': 3.859999895095825, 'end': 4.059999942779541}, {'word': 'almost', 'start': 4.059999942779541, 'end': 4.340000152587891}, {'word': '2', 'start': 4.340000152587891, 'end': 4.579999923706055}, {'word': 'years', 'start': 4.579999923706055, 'end': 4.840000152587891}, {'word': 'and', 'start': 4.840000152587891, 'end': 5.0}, {'word': 'live', 'start': 5.0, 'end': 5.139999866485596}, {'word': 'together', 'start': 5.139999866485596, 'end': 5.480000019073486}, {'word': 'His', 'start': 6.119999885559082, 'end': 6.300000190734863}, {'word': 'mother', 'start': 6.300000190734863, 'end': 6.519999980926514}, {'word': 'is', 'start': 6.519999980926514, 'end': 6.699999809265137}, {'word': 'very', 'start': 6.699999809265137, 'end': 6.980000019073486}, {'word': 'involved', 'start': 6.980000019073486, 'end': 7.300000190734863}, {'word': 'in', 'start': 7.300000190734863, 'end': 7.440000057220459}, {'word': 'his', 'start': 7.440000057220459, 'end': 7.579999923706055}, {'word': 'life', 'start': 7.579999923706055, 'end': 7.880000114440918}, {'word': 'some', 'start': 8.140000343322754, 'end': 8.359999656677246}, {'word': 'might', 'start': 8.359999656677246, 'end': 8.5600004196167}, {'word': 'say', 'start': 8.5600004196167, 'end': 8.760000228881836}, {'word': 'overbearing', 'start': 8.760000228881836, 'end': 9.199999809265137}, {'word': 'but', 'start': 9.4399995803833, 'end': 9.539999961853027}, {'word': 'I', 'start': 9.539999961853027, 'end': 9.65999984741211}, {'word': 'try', 'start': 9.65999984741211, 'end': 9.800000190734863}, {
+    'word': 'to', 'start': 9.800000190734863, 'end': 9.899999618530273}, {'word': 'be', 'start': 9.899999618530273, 'end': 10.0600004196167}, {'word': 'respectful', 'start': 10.0600004196167, 'end': 10.420000076293945}, {'word': "She's", 'start': 11.119999885559082, 'end': 11.420000076293945}, {'word': 'nice', 'start': 11.420000076293945, 'end': 11.619999885559082}, {'word': 'but', 'start': 11.619999885559082, 'end': 11.800000190734863}, {'word': 'has', 'start': 11.800000190734863, 'end': 11.960000038146973}, {'word': 'this', 'start': 11.960000038146973, 'end': 12.15999984741211}, {'word': 'way', 'start': 12.15999984741211, 'end': 12.279999732971191}, {'word': 'of', 'start': 12.279999732971191, 'end': 12.380000114440918}, {'word': 'like', 'start': 12.380000114440918, 'end': 12.760000228881836}, {'word': 'pushing', 'start': 13.100000381469727, 'end': 13.100000381469727}, {'word': 'boundaries', 'start': 13.100000381469727, 'end': 13.460000038146973}, {'word': 'while', 'start': 13.460000038146973, 'end': 13.720000267028809}, {'word': 'acting', 'start': 13.720000267028809, 'end': 13.920000076293945}, {'word': 'like', 'start': 13.920000076293945, 'end': 14.140000343322754}, {'word': 'she', 'start': 14.140000343322754, 'end': 14.300000190734863}, {'word': 'means', 'start': 14.300000190734863, 'end': 14.460000038146973}, {'word': 'well', 'start': 14.460000038146973, 'end': 14.880000114440918}, {'word': 'So', 'start': 15.100000381469727, 'end': 15.260000228881836}, {'word': 'the', 'start': 15.260000228881836, 'end': 15.460000038146973}, {'word': 'issue', 'start': 15.460000038146973, 'end': 15.65999984741211}, {'word': 'I', 'start': 16.139999389648438, 'end': 16.299999237060547}, {'word': 'have', 'start': 16.299999237060547, 'end': 16.420000076293945}, {'word': 'a', 'start': 16.420000076293945, 'end': 16.520000457763672}, {'word': 'no', 'start': 16.860000610351562, 'end': 17.020000457763672}, {'word': 'shoes', 'start': 17.020000457763672, 'end': 17.280000686645508}, {'word': 'in', 'start': 17.280000686645508, 'end': 17.420000076293945}, {'word': 'the', 'start': 17.420000076293945, 'end': 17.68000030517578}, {'word': 'house', 'start': 17.68000030517578, 'end': 17.780000686645508}, {'word': 'rule', 'start': 18.18000030517578, 'end': 18.5}]
+
+# Create an instance of VideoTools
+video_tools = VideoTools()
+
+# Generate SRT file using the provided words data
+# We'll pass a dummy file path since we're providing the words directly
+srt_file_path = video_tools.generate_srt("dummy_path.mp3", words=words_data)
+
+print(f"SRT file generated at: {srt_file_path}")
+
+# Print the first few lines of the generated SRT file to verify
+if os.path.exists(srt_file_path):
+    with open(srt_file_path, 'r', encoding='utf-8') as f:
+        print("\nFirst 10 lines of the SRT file:")
+        for i, line in enumerate(f):
+            print(line.strip())
+            if i >= 10:
+                break
+else:
+    print("SRT file was not created successfully.")
