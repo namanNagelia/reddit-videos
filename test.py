@@ -47,7 +47,7 @@ srt_path = videoTool.generate_srt(tts_path)
 
 # 5: Export video
 video = videoTool.make_video(video_path=video_path, music_path=music_path, tts_path=tts_path,
-                             srt_path=srt_path, output_path="output.mp4", target_resolution=(720, 1280), font=font_file)
+                             srt_path=srt_path, output_path="mainVideo.mp4", target_resolution=(720, 1280), font=font_file)
 
 # Youtube short resolution
 
