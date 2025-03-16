@@ -76,7 +76,17 @@ class VideoTools:
         return improved_script
 
     def convert_text_to_speech(self, text, filename, voice_name="en-US-Neural2-J"):
+        # Print the byte length of the text
+        text_bytes = text.encode('utf-8')
+        byte_length = len(text_bytes)
+        print(f"Text length: {byte_length} bytes")
 
+        # Check if text is too long for standard API
+        if byte_length > 4800:  # Using 4800 as a safe limit (below 5000)
+            print("Text is too long for standard API, splitting into chunks...")
+            return self._process_long_text(text, filename, voice_name)
+
+        # Standard processing for shorter texts
         client = texttospeech.TextToSpeechClient()
 
         # Use SSML to add breaks and emphasis for more natural speech
@@ -132,6 +142,94 @@ class VideoTools:
         # os.remove(temp_filename)
 
         return temp_filename
+
+    def _process_long_text(self, text, filename, voice_name):
+        """Process long text by splitting it into smaller chunks and combining the audio."""
+        # Split text into sentences
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+
+        chunks = []
+        current_chunk = ""
+        chunk_files = []
+
+        # Group sentences into chunks under 4800 bytes
+        for sentence in sentences:
+            test_chunk = current_chunk + " " + sentence if current_chunk else sentence
+            if len(test_chunk.encode('utf-8')) > 4800:
+                # Process current chunk if adding this sentence would make it too long
+                if current_chunk:
+                    chunks.append(current_chunk)
+                    current_chunk = sentence
+                else:
+                    # If a single sentence is too long, split it into words
+                    words = sentence.split()
+                    temp_sentence = ""
+                    for word in words:
+                        test_sentence = temp_sentence + " " + word if temp_sentence else word
+                        if len(test_sentence.encode('utf-8')) > 4800:
+                            chunks.append(temp_sentence)
+                            temp_sentence = word
+                        else:
+                            temp_sentence = test_sentence
+                    if temp_sentence:
+                        current_chunk = temp_sentence
+            else:
+                current_chunk = test_chunk
+
+        # Add the last chunk if it exists
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        print(f"Split text into {len(chunks)} chunks")
+
+        # Process each chunk
+        client = texttospeech.TextToSpeechClient()
+        for i, chunk in enumerate(chunks):
+            print(
+                f"Processing chunk {i+1}/{len(chunks)} ({len(chunk.encode('utf-8'))} bytes)")
+
+            ssml_text = f"""<speak>{chunk}</speak>"""
+            synthesis_input = texttospeech.SynthesisInput(ssml=ssml_text)
+
+            voice = texttospeech.VoiceSelectionParams(
+                language_code="en-US",
+                name=voice_name,
+            )
+
+            audio_config = texttospeech.AudioConfig(
+                audio_encoding=texttospeech.AudioEncoding.MP3,
+                speaking_rate=1.2,
+                pitch=0,
+                volume_gain_db=0,
+                effects_profile_id=["medium-bluetooth-speaker-class-device"]
+            )
+
+            response = client.synthesize_speech(
+                input=synthesis_input, voice=voice, audio_config=audio_config
+            )
+
+            chunk_filename = f"temp_chunk_{i}.mp3"
+            with open(chunk_filename, "wb") as out:
+                out.write(response.audio_content)
+
+            chunk_files.append(chunk_filename)
+
+        # Combine all audio chunks
+        combined = AudioSegment.empty()
+        for chunk_file in chunk_files:
+            audio = AudioSegment.from_mp3(chunk_file)
+            combined += audio
+
+        # Export combined audio
+        output_filename = "temp_tts_output.mp3"
+        combined.export(output_filename, format="mp3", bitrate="128k")
+
+        # Clean up temporary files
+        for chunk_file in chunk_files:
+            os.remove(chunk_file)
+
+        print(f"Combined audio saved to {output_filename}")
+        return output_filename
 
     def parse_srt(self, srt_file_path):
         try:
@@ -348,7 +446,7 @@ class VideoTools:
             final_video = final_video.fadein(2).fadeout(2)
 
             final_video.write_videofile(
-                output_path, codec="libx264", audio_codec="aac", fps=30, preset="ultrafast"
+                output_path, codec="libx264", audio_codec="aac", fps=30, preset="ultrafast", threads=os.cpu_count()
             )
             print(f"Saved final video to {output_path}")
 
