@@ -191,44 +191,99 @@ class VideoTools:
                     response_format="verbose_json",
                     timestamp_granularities=["word"]
                 )
-                words = transcript.words  # Access the words from the transcript response
+                words = transcript.words
         else:
-            # Use the provided words list
             print("Using provided words list")
 
-        # Group words into lines with approximately five words per line
+        # Group words into lines with proper sentence structure
         grouped_segments = []
         current_line = []
         current_start = None
-        print(words)
         sentence_endings = {'.', '!', '?'}
 
+        def get_word_text(word):
+            """Helper function to safely get word text"""
+            if isinstance(word, dict):
+                return word.get('word', '')
+            return getattr(word, 'word', '')
+
+        def get_word_start(word):
+            """Helper function to safely get word start time"""
+            if isinstance(word, dict):
+                return word.get('start', 0)
+            return getattr(word, 'start', 0)
+
+        def get_word_end(word):
+            """Helper function to safely get word end time"""
+            if isinstance(word, dict):
+                return word.get('end', 0)
+            return getattr(word, 'end', 0)
+
+        def is_next_word_capitalized(current_index, words_list):
+            """Helper function to safely check if next word starts with capital"""
+            if current_index >= len(words_list) - 1:
+                return False
+            next_word_text = get_word_text(words_list[current_index + 1])
+            return next_word_text and next_word_text[0].isupper()
+
+        def should_capitalize(word_text, is_start=False):
+            """Helper function to determine if word should be capitalized"""
+            if not word_text:
+                return False
+            always_capitalize = {'i', 'i\'m', 'i\'ve', 'i\'ll', 'i\'d'}
+            return (is_start or
+                    word_text.lower() in always_capitalize or
+                    word_text.lower().startswith('i\''))
+
+        def format_line(line):
+            """Helper function to format a line of text"""
+            if not line:
+                return ""
+            # Join words and handle basic punctuation
+            text = " ".join(line)
+            # Capitalize first word if needed
+            if text and should_capitalize(line[0], True):
+                text = text[0].upper() + \
+                    text[1:] if len(text) > 1 else text.upper()
+            # Add period if no sentence ending
+            if text and not any(text.endswith(end) for end in sentence_endings):
+                text += "."
+            return text
+
         for index, word in enumerate(words):
+            # Get word properties safely
+            word_text = get_word_text(word)
+            if not word_text:  # Skip empty words
+                continue
+
             # Start a new line
             if len(current_line) == 0:
-                # Handle both object attributes and dictionary keys
-                if hasattr(word, 'start'):
-                    current_start = word.start
-                else:
-                    current_start = word['start']
+                current_start = get_word_start(word)
+
+            # Handle capitalization
+            if should_capitalize(word_text, len(current_line) == 0):
+                word_text = word_text[0].upper(
+                ) + word_text[1:] if len(word_text) > 1 else word_text.upper()
 
             # Add word to current line
-            if hasattr(word, 'word'):
-                current_line.append(word.word)
-            else:
-                current_line.append(word['word'])
+            current_line.append(word_text)
 
-            # End the line if we have 5 words or it's the last word
-            if len(current_line) == 5 or index == len(words) - 1:
-                # Handle both object attributes and dictionary keys
-                if hasattr(word, 'end'):
-                    current_end = word.end
-                else:
-                    current_end = word['end']
+            # Check if we should end the line
+            should_end_line = (
+                len(current_line) >= 5 or  # Line is long enough
+                index == len(words) - 1 or  # Last word
+                # Sentence ending
+                any(word_text.endswith(end) for end in sentence_endings) or
+                # Next word starts with capital
+                is_next_word_capitalized(index, words)
+            )
 
-                grouped_segments.append(
-                    (current_start, current_end, " ".join(current_line))
-                )
+            if should_end_line:
+                line_text = format_line(current_line)
+                if line_text:  # Only add non-empty lines
+                    grouped_segments.append(
+                        (current_start, get_word_end(word), line_text)
+                    )
                 current_line = []
 
         # Generate SRT file
