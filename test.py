@@ -18,7 +18,7 @@ videoTool = VideoTools()
 # 1: Make UI and you put reddit URL
 # 2: It gets the text
 scraper = RedditScraper()
-post_url = "https://www.reddit.com/r/AmItheAsshole/comments/1ip5gou/aita_for_yelling_at_my_friends_and_leaving_dinner/"
+post_url = "https://www.reddit.com/r/AmItheAsshole/comments/d6bdoi/aita_for_exposing_my_family_members_incest/"
 title = scraper.get_post_title(post_url)
 post_text = scraper.get_post_text(post_url)
 # Replace "AITA" with "Am I The Asshole" in the title
@@ -47,14 +47,19 @@ random_music = random.choice(music_files)
 music_path = os.path.join(music_folder, random_music)
 
 # Generate subtitles
-print(tts_path)
 srt_path = videoTool.generate_srt(tts_path)
+
+shorts_folder = os.path.join(resources_folder, "shorts")
+shorts_files = [f for f in os.listdir(
+    shorts_folder) if f.endswith(('.mp4', '.avi', '.mov'))]
+random_shorts = random.choice(shorts_files)
+shorts_path = os.path.join(shorts_folder, random_shorts)
 
 # 5: Export video
 video = videoTool.make_video(video_path=video_path, music_path=music_path, tts_path=tts_path,
                              srt_path=srt_path, output_path="mainVideo.mp4", target_resolution=(720, 1280), font=font_file)
-youtube_shorts = videoTool.make_youtube_shorts(video_path=video_path, music_path=music_path,
-                                               tts_path=tts_path, srt_path=srt_path, output_path="youtube_shorts.mp4", target_resolution=(1080, 1920), font=font_file)
+youtube_shorts = videoTool.make_video(video_path=shorts_path, music_path=music_path,
+                                      tts_path=tts_path, srt_path=srt_path, output_path="youtube_shorts.mp4", target_resolution=(1080, 1920), font=font_file)
 
 # Youtube short resolution
 
