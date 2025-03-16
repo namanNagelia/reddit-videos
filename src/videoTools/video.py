@@ -200,6 +200,8 @@ class VideoTools:
         grouped_segments = []
         current_line = []
         current_start = None
+        print(words)
+        sentence_endings = {'.', '!', '?'}
 
         for index, word in enumerate(words):
             # Start a new line

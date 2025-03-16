@@ -7,6 +7,16 @@ class RedditScraper:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
 
+    def get_post_title(self, url):
+        try:
+            response = requests.get(url, headers=self.headers)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'html.parser')
+            post_title = soup.find('h1', {'slot': 'title'})
+            return post_title.get_text(strip=True) if post_title else ""
+        except requests.RequestException as e:
+            return f"Error fetching the post title: {str(e)}"
+
     def get_post_text(self, url):
         try:
             response = requests.get(url, headers=self.headers)

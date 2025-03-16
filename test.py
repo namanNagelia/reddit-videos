@@ -18,12 +18,17 @@ videoTool = VideoTools()
 # 1: Make UI and you put reddit URL
 # 2: It gets the text
 scraper = RedditScraper()
-post_url = "https://www.reddit.com/r/AmItheAsshole/comments/1itosgl/aita_for_making_my_bfs_mom_cry_because_of_a_petty/"
+post_url = "https://www.reddit.com/r/AmItheAsshole/comments/1ip5gou/aita_for_yelling_at_my_friends_and_leaving_dinner/"
+title = scraper.get_post_title(post_url)
 post_text = scraper.get_post_text(post_url)
+# Replace "AITA" with "Am I The Asshole" in the title
+if "AITA" in title:
+    title = title.replace("AITA", "Am I The Asshole")
 
+text = title + "\n\n" + post_text[0]
 # 3: Convert to audio
 tts_path = videoTool.convert_text_to_speech(
-    text=post_text[0], filename="audio.mp3")
+    text=text, filename="audio.mp3")
 
 # 4: Randomly choose a minecraft/SS video and concat
 resources_folder = os.path.join(os.getcwd(), "resources")

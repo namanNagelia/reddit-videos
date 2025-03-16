@@ -55,10 +55,12 @@ class Application:
     def handle_error(self, error_message):
         """Safely handle errors and update UI"""
         print(f"Error: {error_message}")
+
         def _handle_error():
             self.status_label.config(text=f"Error: {error_message}")
             self.generate_button.config(state='normal')
-            messagebox.showerror("Error", f"An error occurred: {error_message}")
+            messagebox.showerror(
+                "Error", f"An error occurred: {error_message}")
 
         self.master.after(0, _handle_error)
 
@@ -136,7 +138,8 @@ class Application:
 
             # Final steps
             self.update_status("Process Completed!", 100)
-            self.master.after(0, lambda: self.generate_button.config(state='normal'))
+            self.master.after(
+                0, lambda: self.generate_button.config(state='normal'))
             self.master.after(0, lambda: messagebox.showinfo("Success",
                                                              "Video generated successfully!"))
 
